@@ -14,7 +14,7 @@ class PriceUpdate:
     trading_path: TradingPath
     optimal_price_ratio: float
     actual_price_ratio: float
-    token_0_in: float
+    token_0_in: int
     token_1_out: float
     trading_fee: float
 
@@ -56,16 +56,3 @@ class PriceDiscoveryModule:
         )
 
         return price_update
-
-trading_path = TradingPath(
-    token0_name="Token0",
-    token1_name="Token1",
-    token0_decimals=18,
-    token1_decimals=5,
-    reserve0=1000.0,
-    reserve1=500.0
-)
-
-token_0_in = 10.0
-price_update = PriceDiscoveryModule.calculate_price_update(trading_path, token_0_in)
-print(price_update)
