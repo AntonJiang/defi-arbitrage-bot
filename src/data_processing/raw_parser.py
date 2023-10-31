@@ -57,7 +57,7 @@ class DataParser:
         blockNumber = logs[0].blockNumber
 
         #make Trading path from this data 
-        trading_path = TradingPath(UniswapV2TradingPath, contract_address, sender, recipient, amount0, amount1)
+        trading_path = UniswapV2TradingPath(contract_address, sender, recipient, amount0, amount1)
         return trading_path
 
     
