@@ -26,7 +26,7 @@ contract FlashloanTest is Test {
     }
 
     function testFlashloan() public {
-        deal(address(DAI), address(fh), 10000e18 * 0.10); // how about a 10% fee
+        deal(address(DAI), address(fh), 10000e18 * 0.0005); // how about a 10% fee
 
         fh.requestFlashLoan(address(DAI), 10000e18, "yoyoyoy");
 

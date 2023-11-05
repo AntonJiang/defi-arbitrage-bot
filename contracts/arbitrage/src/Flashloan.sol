@@ -117,7 +117,7 @@ contract FlashLoan is FlashLoanSimpleReceiverBase {
         //
 
         console2.log("my balance", getBalance(asset));
-        swapExactInputMultihop(10000e18);
+//        swapExactInputMultihop(10000e18);
 
         // At the end of your logic above, this contract owes
         // the flashloaned amount + premiums.
