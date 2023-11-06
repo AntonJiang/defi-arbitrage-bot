@@ -14,17 +14,16 @@ class DataParser:
 
     def parse(self, event: ContractEvent) -> TradingPath:
         """Returns a TradingPath parsed from a ContractEvent"""
-        defintion = event.definition
+        definition = event.definition
         raw_event = event.raw_event
         args = raw_event.args
 
         sender = args.sender
-        recipient = args.recipient
-        amount0 = args.amount0
-        amount1 = args.amount1
-        sqrtPriceX96 = args.sqrtPriceX96
-        liquidity = args.liquidity
-        tick = args.tick
+        recipient = args.to
+        amount0in = args.amount0In
+        amount0out = args.amount0Out
+        amount1in = args.amount1In
+        amount1out = args.amount1Out
 
         # May be useful in the future
         logIndex = raw_event.logIndex
@@ -34,9 +33,15 @@ class DataParser:
         blockHash = raw_event.blockHash
         blockNumber = raw_event.blockNumber
 
-        # Make TradinPath from this data
+        # Make TradingPath from this data
         trading_path = UniswapV2TradingPath(
-            definition.address, sender, recipient, amount0, amount1
+            definition.address,
+            sender,
+            recipient,
+            amount0in,
+            amount1out,
+            0,  # reserve 0
+            0,  # reserve 1
         )
         return trading_path
 

@@ -18,8 +18,11 @@ class ArbStrategy(abc.ABC):
     flashloan_providers: list[FlashloanProvider]
     trading_path_db: TradingPathDB
 
-    def __init__(self, flashloan_providers: list[FlashloanProvider],
-                 trading_path_db: TradingPathDB):
+    def __init__(
+        self,
+        flashloan_providers: list[FlashloanProvider],
+        trading_path_db: TradingPathDB,
+    ):
         self.flashloan_providers = flashloan_providers
         self.starting_tokens = self.get_flashloan_tokens(self.flashloan_providers)
         self.trading_path_db = trading_path_db
@@ -43,8 +46,7 @@ class ArbStrategy(abc.ABC):
 
 
 class BruteForceArbStrategy(ArbStrategy):
-    """
-    """
+    """ """
 
     def compute_optimal_path(self) -> ExecutionPlan:
         """
