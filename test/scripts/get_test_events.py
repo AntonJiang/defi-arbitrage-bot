@@ -16,4 +16,4 @@ node_stream = NodeStreaming(
 event = node_stream.poll()
 
 with open(os.path.join(os.pardir, f"test_events/{uuid.uuid4()}.pickle"), "wb") as f:
-  pickle.dump(event, f, protocol=pickle.HIGHEST_PROTOCOL)
+    pickle.dump(event, f, protocol=pickle.HIGHEST_PROTOCOL)
