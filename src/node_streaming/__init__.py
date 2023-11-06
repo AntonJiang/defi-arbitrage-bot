@@ -98,6 +98,7 @@ class NodeStreaming:
     def stop(self):
         print("Stopping NodeStreaming...")
         self.events_filters.clear()
+        print("NodeStreaming service has stopped.")
 
 
 if __name__ == "__main__":
@@ -117,4 +118,3 @@ if __name__ == "__main__":
     event = node_stream.poll()
     print(f"Event: {event}")
     node_stream.stop()
-    print("NodeStreaming service has stopped.")
