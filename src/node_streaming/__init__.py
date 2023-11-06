@@ -36,6 +36,9 @@ class NodeStreaming:
         print("Initializing NodeStreaming...")
         self.w3 = Web3(Web3.HTTPProvider(node_url))
 
+        if not node_url:
+          raise ValueError("NODE_URL must be set in environment variables")
+
         if not self.w3.is_connected():
             raise ConnectionError("Unable to connect to the node at URL: " + node_url)
         else:
@@ -101,7 +104,7 @@ if __name__ == "__main__":
     print("Starting the NodeStreaming service...")
 
     node_stream = NodeStreaming(
-        os.getenv("NODE_URL"),
+        os.getenv("NODE_URL", None),
         watching_contracts=[
             ContractEventDefinition(
                 "0x397FF1542f962076d0BFE58eA045FfA2d347ACa0", "Swap"
