@@ -37,7 +37,7 @@ class NodeStreaming:
         self.w3 = Web3(Web3.HTTPProvider(node_url))
 
         if not node_url:
-          raise ValueError("NODE_URL must be set in environment variables")
+            raise ValueError("NODE_URL must be set in environment variables")
 
         if not self.w3.is_connected():
             raise ConnectionError("Unable to connect to the node at URL: " + node_url)
@@ -67,7 +67,7 @@ class NodeStreaming:
                 fromBlock=start_block_number
             )
             print(
-                f"Monitoring for {event_name} events at address {contract_event.address}"
+                f"Monitoring for {event_name} events at address {contract_def.address}"
             )
             self.events_filters.append(
                 ContractEventFilter(event_filter=event_filter, definition=contract_def)
@@ -76,8 +76,8 @@ class NodeStreaming:
     def refresh(self):
         print("Refreshing events...")
         for contract_event_filter in self.events_filters:
-            contract_def = contract_event_filter.contract_def
-            event_filter = contact_event_filter.event_filter
+            contract_def = contract_event_filter.definition
+            event_filter = contract_event_filter.event_filter
             new_entries = event_filter.get_new_entries()
             if new_entries:
                 print(f"Found {len(new_entries)} new events.")
