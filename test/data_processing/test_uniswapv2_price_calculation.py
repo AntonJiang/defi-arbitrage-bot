@@ -11,7 +11,7 @@ def test_price_discovery_module_simple():
         token_0="0xa",
         token_1="0xb",
         reserve_0=1000,
-        reserve_1=500
+        reserve_1=500,
     )
 
     token_0_in = 10
@@ -26,5 +26,6 @@ def test_price_discovery_module_simple():
     assert result.token_0_in == token_0_in
 
     assert result.token_1_out == pytest.approx(4.935790171985332, 0.0001)
-    assert result.actual_price_ratio == pytest.approx(2.0260180541624773,
-                                                      0.0001)  # As per the printed result in the error message
+    assert result.actual_price_ratio == pytest.approx(
+        2.0260180541624773, 0.0001
+    )  # As per the printed result in the error message

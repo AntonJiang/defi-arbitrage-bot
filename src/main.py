@@ -7,7 +7,11 @@ from src.data_processing.trading_path import TradingPath
 from src.db.trading_path_db import InMemoryTradingPathDB
 from src.flashloan.providers import FlashloanProvider, AaveFlashloanProvider
 from src.node_streaming import NodeStreaming, ContractEventDefinition, ContractEvent
-from src.transaction_execution import TransactionExecutor, SimulationResult, ExecutionResult
+from src.transaction_execution import (
+    TransactionExecutor,
+    SimulationResult,
+    ExecutionResult,
+)
 
 
 class Bot:
@@ -16,16 +20,23 @@ class Bot:
     arb_calculator: ArbStrategy
     transaction_executor: TransactionExecutor
 
-    def __init__(self, watching_events: list[ContractEventDefinition],
-                 flashloan_providers: list[FlashloanProvider]):
-        self.node = NodeStreaming(os.environ["NODE_URL"], watching_contracts=watching_events)
+    def __init__(
+        self,
+        watching_events: list[ContractEventDefinition],
+        flashloan_providers: list[FlashloanProvider],
+    ):
+        self.node = NodeStreaming(
+            os.environ["NODE_URL"], watching_contracts=watching_events
+        )
         self.flashloan_providers = flashloan_providers
 
         self.data_parser = DataParser()
 
         self.trading_path_db = InMemoryTradingPathDB()
 
-        self.arb_calculator = BruteForceArbStrategy(self.flashloan_providers, self.trading_path_db)
+        self.arb_calculator = BruteForceArbStrategy(
+            self.flashloan_providers, self.trading_path_db
+        )
 
         self.transaction_executor = TransactionExecutor()
 
@@ -40,17 +51,24 @@ class Bot:
             execution_plan: ExecutionPlan = self.arb_calculator.compute_optimal_path()
 
             print(f"possible execution plan: {execution_plan}")
-            if execution_plan.final_token_amount - execution_plan.initial_token_amount <= 0:
+            if (
+                execution_plan.final_token_amount - execution_plan.initial_token_amount
+                <= 0
+            ):
                 continue
 
-            simulation_result: SimulationResult = self.transaction_executor.simulate_transaction(execution_plan)
+            simulation_result: SimulationResult = (
+                self.transaction_executor.simulate_transaction(execution_plan)
+            )
 
             print(f"simulation result: {simulation_result}")
 
             if not simulation_result.profitable:
                 continue
 
-            execution_result: ExecutionResult = self.transaction_executor.execute_transaction(execution_plan)
+            execution_result: ExecutionResult = (
+                self.transaction_executor.execute_transaction(execution_plan)
+            )
             print(f"execution result: {execution_result}")
 
         self.close()
@@ -59,13 +77,10 @@ class Bot:
         self.node.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     load_dotenv()
 
-  
     # TODO: hardcode a more comprehensive list of contract event definitions, more LPs, just Sync
-
-
     watching_contracts = [ContractEventDefinition("0x397FF1542f962076d0BFE58eA045FfA2d347ACa0", "Sync"),
                           ContractEventDefinition("0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc", "Sync"), #USDC/WETH
                           ContractEventDefinition("0x4028DAAC072e492d34a3Afdbef0ba7e35D8b55C4", "Sync"), #stETH/WETH
@@ -142,12 +157,10 @@ if __name__ == '__main__':
                           ContractEventDefinition("0x8D9B9e25b208CAC58415d915898c2ffa3A530aa1", "Sync") #CHSB/WETH
                          #WETH LP with top 100 tokens
                          ]
-    
-    
-
-
+   
     flashloan_providers = [AaveFlashloanProvider()]
-    arb_bot = Bot(watching_events=watching_contracts,
-                  flashloan_providers=flashloan_providers)
+    arb_bot = Bot(
+        watching_events=watching_contracts, flashloan_providers=flashloan_providers
+    )
 
     arb_bot.run()

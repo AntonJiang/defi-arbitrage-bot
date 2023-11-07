@@ -33,7 +33,7 @@ class AaveFlashloanProvider(FlashloanProvider):
         "0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "0x018008bfb33d285247A21d44E50697654f754e63": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
         "0x5E8C8A7243651DB1384C0dDfDbE39761E8e7E51a": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
-        "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
+        "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9": "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
     }
 
     reverse_a_tokens = reverse_dict(a_tokens)
@@ -45,4 +45,6 @@ class AaveFlashloanProvider(FlashloanProvider):
         raise NotImplementedError
 
     def get_max_token_supported(self, web3: Web3Pool, token: str):
-        return web3.read_contract(token, ERC20_balance_of, "balanceOf", [self.reverse_a_tokens[token]])
+        return web3.read_contract(
+            token, ERC20_balance_of, "balanceOf", [self.reverse_a_tokens[token]]
+        )

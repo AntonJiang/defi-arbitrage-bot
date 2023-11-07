@@ -54,7 +54,7 @@ class UniswapV2TradingPath(TradingPath):
             actual_price_ratio=actual_price_ratio,
             token_0_in=token_0_in,
             token_1_out=int(amount1_out_adjusted),
-            trading_fee=fee
+            trading_fee=fee,
         )
 
         return price_update

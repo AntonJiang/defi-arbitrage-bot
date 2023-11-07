@@ -8,52 +8,45 @@ from src.node_streaming import ContractEvent
 
 
 class DataParser:
-    # TODO (write data parser here, parse into TradingPath objects) @sofia, @victor
-    # communicate with node streaming module to grab all the information needed to parse
-
     """
-    Main function is given a raw log and knowing the contract address, parse into corresponding trading path objects
-
+    Given a raw log and knowing the contract address, parse into corresponding trading path objects
     """
 
     def parse(self, event: ContractEvent) -> TradingPath:
-        """
-        TODO
-        :return:
-        """
-        logs = getLogs(self, contract_address, *args)
+        """Returns a TradingPath parsed from a ContractEvent"""
+        definition = event.definition
+        raw_event = event.raw_event
+        args = raw_event.args
 
-        #now that we have the logs, we need to parse all the information from it 
-        sender = logs[0].args.sender
-        recipient = logs[0].args.recipient
-        amount0 = logs[0].args.amount0
-        amount1 = logs[0].args.amount1
-        sqrtPriceX96 = logs[0].args.sqrtPriceX96
-        liquidity = logs[0].args.liquidity
-        tick = logs[0].args.tick
+        sender = args.sender
+        recipient = args.to
+        amount0in = args.amount0In
+        amount0out = args.amount0Out
+        amount1in = args.amount1In
+        amount1out = args.amount1Out
 
-        logIndex = logs[0].logIndex
-        transactionIndex = logs[0].transactionIndex
-        transactionHash = logs[0].transactionHash
-        address = logs[0].address
-        blockHash = logs[0].blockHash
-        blockNumber = logs[0].blockNumber
+        # May be useful in the future
+        logIndex = raw_event.logIndex
+        transactionIndex = raw_event.transactionIndex
+        transactionHash = raw_event.transactionHash
+        address = raw_event.address
+        blockHash = raw_event.blockHash
+        blockNumber = raw_event.blockNumber
 
-        #make Trading path from this data 
-        trading_path = UniswapV2TradingPath(contract_address, sender, recipient, amount0, amount1)
+        # Make TradingPath from this data
+        trading_path = UniswapV2TradingPath(
+            definition.address,
+            sender,
+            recipient,
+            amount0in,
+            amount1out,
+            0,  # reserve 0
+            0,  # reserve 1
+        )
         return trading_path
 
-    
-
-    
-    
-
-
-
-
-
-
-
-
-
-
+    def parse_many(self, events: list[ContractEvent]) -> list[TradingPath]:
+        trading_paths: list[UniswapV2TradingPath] = []
+        for event in events:
+            trading_paths.append(self.parse(event))
+        return trading_paths
