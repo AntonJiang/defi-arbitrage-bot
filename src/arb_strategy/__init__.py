@@ -1,13 +1,15 @@
 import abc
+import dataclasses
 
 from src.data_processing.trading_path import TradingPath
 from src.db.trading_path_db import TradingPathDB
 from src.flashloan.providers import FlashloanProvider
 
-
+@dataclasses.dataclass
 class ExecutionPlan:
     initial_token_amount: int
     final_token_amount: int
+    token: str
     flashloan_provider: FlashloanProvider
     trading_paths: list[TradingPath]
 
