@@ -33,13 +33,10 @@ class InMemoryTradingPathDB(TradingPathDB):
         self.trading_path = []
 
     def save_path(self, trading_path: TradingPath):
-        # TODO()
-        pass
+        self.trading_path.append(trading_path)
 
     def load_all_path(self) -> list[TradingPath]:
-        # TODO
-        pass
+        return list(self.trading_path)
 
     def load_path_by_token(self, token_address: str) -> list[TradingPath]:
-        # TODO
-        pass
+        return [path for path in self.trading_path if path.token_0 == token_address or path.token_1 == token_address]
