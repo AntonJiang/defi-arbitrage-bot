@@ -57,11 +57,11 @@ class BruteForceArbStrategy(ArbStrategy):
     def compute_all_profit(self, trading_paths: list[TradingPath]):
         #this should return all the profits of all the arbitrage paths 
 
-        #all_combinations = combinations(self, trading_paths)
+        all_combinations = combinations(self, trading_paths)
         #and then use all_combinations instead of trading paths in the for loop 
 
         profits = []
-        for i in range(0,trading_paths): 
+        for i in all_combinations: 
             profits[i] = [trading_paths[i], trading_paths[i].calculate_price] #not sure if this is the correct way to calculate price
             
 
