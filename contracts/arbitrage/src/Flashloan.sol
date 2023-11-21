@@ -8,59 +8,56 @@ import {FlashLoanSimpleReceiverBase} from "@aave-v3/flashloan/base/FlashLoanSimp
 import {IPoolAddressesProvider} from "@aave-v3/IPoolAddressesProvider.sol";
 import {IERC20} from "@openzeppelin/IERC20.sol";
 import '@uniswap-v3/TransferHelper.sol';
-import '@uniswap-v3/ISwapRouter.sol';
-import '@uniswap-v3/IUniversalRouter.sol';
 import '@uniswap-v2/UniswapV2Library.sol';
 
 
 contract FlashLoan is FlashLoanSimpleReceiverBase {
     address payable owner;
 
-    ISwapRouter public immutable swapRouter;
-
-    uint24 public constant poolFee = 3000;
-
-    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-
-    IUniversalRouter universalRouter = IUniversalRouter(0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD);
-
-    constructor(address _addressProvider, address _swapRouter)
+    constructor(address _addressProvider)
         FlashLoanSimpleReceiverBase(IPoolAddressesProvider(_addressProvider))
     {
         owner = payable(msg.sender);
-        swapRouter = ISwapRouter(_swapRouter);
     }
 
-    /// @notice swapInputMultiplePools swaps a fixed amount of DAI for a maximum possible amount of WETH9 through an intermediary pool.
-    /// For this example, we will swap DAI to USDC, then USDC to WETH9 to achieve our desired output.
-    /// @dev The calling address must approve this contract to spend at least `amountIn` worth of its DAI for this function to succeed.
-    /// @param amountIn The amount of DAI to be swapped.
-    /// @return amountOut The amount of WETH9 received after the swap.
-    function swapExactInputMultihop(uint256 amountIn) public returns (uint256 amountOut) {
+    function uniswapV2SwapTest(uint256 amountIn, address startToken, address[] memory pathes) public view returns (uint256 amountInNext) {
         // Assume this address already has amountIN
+        require(pathes.length > 1, "Pathes array must have at least 2 elements");
 
-        // Approve the router to spend DAI.
-        TransferHelper.safeApprove(DAI, address(swapRouter), amountIn);
+        uint256 amountInNext = amountIn;
+        for (uint i = 0; i < pathes.length; i++) {
+            address pairAddress = pathes[i]; // Assuming the pathes array contains the addresses of LPs (pair contracts)
+            IUniswapV2Pair pair = IUniswapV2Pair(pairAddress);
+            address token0 = pair.token0();
+            address token1 = pair.token1();
 
-        // Multiple pool swaps are encoded through bytes called a `path`. A path is a sequence of token addresses and poolFees that define the pools used in the swaps.
-        // The format for pool encoding is (tokenIn, fee, tokenOut/tokenIn, fee, tokenOut) where tokenIn/tokenOut parameter is the shared token across the pools.
-        // Since we are swapping DAI to USDC and then USDC to WETH9 the path encoding is (DAI, 0.3%, USDC, 0.3%, WETH9).
-        ISwapRouter.ExactInputParams memory params =
-            ISwapRouter.ExactInputParams({
-                path: abi.encodePacked(DAI, poolFee, USDC, poolFee, WETH9, poolFee, DAI),
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: 0
-            });
+            (uint reserve0, uint reserve1,) = pair.getReserves();
 
-        // Executes the swap.
-        amountOut = swapRouter.exactInput(params);
+            uint amountOut = 0;
+
+            address tokenOut;
+
+            if (startToken == token0) {
+                amountOut = UniswapV2Library.getAmountOut(amountInNext, reserve0, reserve1);
+                tokenOut = token1;
+            } else {
+                amountOut = UniswapV2Library.getAmountOut(amountInNext, reserve1, reserve0);
+                tokenOut = token0;
+            }
+
+            // Approve the LP to spend the token
+//            IERC20(startToken).transfer(pairAddress, amountInNext);
+
+            // Swap
+//            pair.swap(amountOut0, amountOut1, address(this), "");
+            // Get the balance of the next token to be used as input for the next swap
+            amountInNext = amountOut;
+            startToken = tokenOut;
+        }
+        return amountInNext;
     }
 
-    function customPathSwap(uint256 amountIn, address startToken, address[] calldata pathes) public returns (uint256 amountOut) {
+    function uniswapV2Swap(uint256 amountIn, address startToken, address[] memory pathes) public returns (uint256 amountOut) {
         // Assume this address already has amountIN
         require(pathes.length > 1, "Pathes array must have at least 2 elements");
 
@@ -101,6 +98,31 @@ contract FlashLoan is FlashLoanSimpleReceiverBase {
 
     }
 
+    function fromBytes(bytes memory data) public pure returns (address startToken, address[] memory pathes) {
+        require(data.length >= 20, "Data too short");
+
+        // Extract the startToken
+        uint160 num;
+        assembly {
+            num := mload(add(data, 20))
+        }
+        startToken = address(num);
+
+        // Calculate the number of addresses in pathes
+        uint256 numAddresses = (data.length - 20) / 20;
+        pathes = new address[](numAddresses);
+
+        // Extract each address
+        for (uint256 i = 0; i < numAddresses; i++) {
+            assembly {
+                num := mload(add(add(data, 40), mul(i, 20)))
+            }
+            pathes[i] = address(num);
+        }
+    }
+
+    event Arb(uint256 initialAmount, uint256 finalAmount, address token);
+
     /**
         This function is called after your contract has received the flash loaned amount
      */
@@ -111,25 +133,21 @@ contract FlashLoan is FlashLoanSimpleReceiverBase {
         address initiator,
         bytes calldata params
     ) external override returns (bool) {
-        //
-        // This contract now has the funds requested.
-        // Your logic goes here.
-        //
 
-        console2.log("my balance", getBalance(asset));
-//        swapExactInputMultihop(10000e18);
-
-        // At the end of your logic above, this contract owes
-        // the flashloaned amount + premiums.
-        // Therefore ensure your contract has enough to repay
-        // these amounts.
-
-        // Approve the Pool contract allowance to *pull* the owed amount
+        console2.log("starting balance with flashloan:", getBalance(asset));
         uint256 amountOwed = amount + premium;
-//        console2.log("someargs", params);
-        console2.log("amount owed", amountOwed);
-        console2.log("my balance", getBalance(asset));
+        console2.log("flashloan amount owed:", amountOwed);
+
+        // pre-determine that the flashloan amount is the swap initial amount
+        (address decodeStartToken, address[] memory decodePathes) = fromBytes(params);
+        uint256 finalTokenAmount = uniswapV2Swap(amount, asset, decodePathes);
+        // Approve the Pool contract allowance to *pull* the owed amount
+
+        console2.log("final_token_amount", finalTokenAmount);
+        console2.log("my balance after swap:", getBalance(asset));
         IERC20(asset).approve(address(POOL), amountOwed);
+
+        emit Arb(amount, finalTokenAmount, asset);
 
         return true;
     }
@@ -143,10 +161,6 @@ contract FlashLoan is FlashLoanSimpleReceiverBase {
         address asset = _token;
         uint256 amount = _amount;
         uint16 referralCode = 0;
-
-        // Transfer `amountIn` of DAI to this contract.
-//        TransferHelper.safeTransferFrom(DAI, msg.sender, address(this), 10000e18);
-
 
         POOL.flashLoanSimple(
             receiverAddress,
