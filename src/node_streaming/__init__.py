@@ -48,7 +48,7 @@ class NodeStreaming:
         self.events_filters: list[ContractEventFilter] = []
 
         if start_block is None:
-            start_block = self.get_latest_block_number()
+            start_block = self.get_latest_block_number() - 20
 
         self.init_event_filters(start_block, watching_contracts)
 
@@ -87,10 +87,9 @@ class NodeStreaming:
                 )
 
     def poll(self) -> ContractEvent:
-        print("Polling for events...")
         while not self.events_queue:
             self.refresh()
-            time.sleep(5)  # Wait for a short time before trying to refresh again
+            time.sleep(10)  # Wait for a short time before trying to refresh again
         event = self.events_queue.pop(0)
         print(f"Polled event: {event.raw_event}")
         return event
