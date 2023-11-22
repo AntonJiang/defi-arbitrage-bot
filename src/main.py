@@ -7,6 +7,7 @@ from src.data_processing.trading_path import TradingPath
 from src.db.trading_path_db import InMemoryTradingPathDB
 from src.flashloan.providers import FlashloanProvider, AaveFlashloanProvider
 from src.node_streaming import NodeStreaming, ContractEventDefinition, ContractEvent
+from src.node_streaming.web3_pool import Web3Pool
 from src.transaction_execution import (
     TransactionExecutor,
     SimulationResult,
@@ -16,6 +17,7 @@ from src.transaction_execution import (
 
 class Bot:
     node: NodeStreaming
+    w3_pool: Web3Pool
     flashloan_providers: list[FlashloanProvider]
     arb_calculator: ArbStrategy
     transaction_executor: TransactionExecutor
@@ -25,12 +27,13 @@ class Bot:
         watching_events: list[ContractEventDefinition],
         flashloan_providers: list[FlashloanProvider],
     ):
+        self.w3_pool = Web3Pool()
         self.node = NodeStreaming(
             os.environ["NODE_URL"], watching_contracts=watching_events
         )
         self.flashloan_providers = flashloan_providers
 
-        self.data_parser = DataParser()
+        self.data_parser = DataParser(self.w3_pool)
 
         self.trading_path_db = InMemoryTradingPathDB()
 
@@ -38,7 +41,7 @@ class Bot:
             self.flashloan_providers, self.trading_path_db
         )
 
-        self.transaction_executor = TransactionExecutor()
+        self.transaction_executor = TransactionExecutor(self.w3_pool)
 
     def run(self):
         while True:
@@ -48,9 +51,13 @@ class Bot:
 
             self.trading_path_db.save_path(trading_path)
 
-            execution_plan: ExecutionPlan = self.arb_calculator.compute_optimal_path()
+            execution_plan: ExecutionPlan | None = self.arb_calculator.compute_optimal_path()
 
-            print(f"possible execution plan: {execution_plan}")
+            if execution_plan is None:
+                print("no possible plan so far.")
+                continue
+
+            print(f"possible execution plan: {execution_plan.final_token_amount / execution_plan.initial_token_amount} profit percentage {execution_plan} ")
             if (
                 execution_plan.final_token_amount - execution_plan.initial_token_amount
                 <= 0
