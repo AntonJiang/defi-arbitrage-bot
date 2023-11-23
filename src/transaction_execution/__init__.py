@@ -1,7 +1,9 @@
 import dataclasses
+from typing import Tuple, Any
 
-from web3 import Web3
+from web3 import Web3, middleware
 from web3.exceptions import ContractLogicError
+from web3.gas_strategies.time_based import fast_gas_price_strategy
 
 from src.arb_strategy import ExecutionPlan
 from src.node_streaming.web3_pool import Web3Pool
@@ -15,6 +17,7 @@ class SimulationResult:
     initial_amount: int
     final_amount: int
     final_amount_w_flashfee: int
+
 
 @dataclasses.dataclass
 class ExecutionResult:
@@ -33,11 +36,38 @@ class TransactionExecutor:
     def __init__(self, w3: Web3Pool):
         self.w3 = w3.web3
         self.contract = self.w3.eth.contract(self.contract_address, abi=ABI)
+        self.w3.eth.set_gas_price_strategy(fast_gas_price_strategy)
 
+        self.w3.middleware_onion.add(middleware.time_based_cache_middleware)
+        self.w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)
+        self.w3.middleware_onion.add(middleware.simple_cache_middleware)
 
     def execute_transaction(self, plan: ExecutionPlan) -> ExecutionResult:
         # TODO
         pass
+
+    def gas_estimation(self, plan: ExecutionPlan) -> tuple[int, int]:
+        """
+        return the ETH gas cost of this plan based on current gas price
+        """
+        estimated_gas_price = int(self.w3.eth.generate_gas_price())
+
+        txParam = self.contract.functions.uniswapV2SwapTest(
+            int(plan.initial_token_amount), plan.token, [addr.contract_address for addr in plan.trading_paths]
+        ).build_transaction({
+            "from": self.caller_address
+        })
+        estimate_gas_params = {
+            'transaction': txParam,
+            'stateOverride': {
+                    self.contract_address: {
+                        "code": self.deploy_code
+                    }
+                }
+        }
+        estimated_gas = self.w3.provider.make_request('eth_estimateGas', [estimate_gas_params])
+        estimated_gas = int(estimated_gas["result"], 16)
+        return estimated_gas, estimated_gas_price
 
     def simulate_transaction(self, plan: ExecutionPlan, block_number="latest") -> SimulationResult:
         try:
@@ -63,7 +93,7 @@ class TransactionExecutor:
         final_with_fee = res - plan.initial_token_amount * 0.0005
 
         return SimulationResult(
-            profitable= final_with_fee > plan.initial_token_amount,
+            profitable=final_with_fee > plan.initial_token_amount,
             profit=final_with_fee - plan.initial_token_amount,
             initial_amount=plan.initial_token_amount,
             final_amount=res,
@@ -86,4 +116,3 @@ class TransactionExecutor:
             data += path_bytes
 
         return "0x" + data.hex()
-

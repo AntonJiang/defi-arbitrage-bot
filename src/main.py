@@ -58,15 +58,19 @@ class Bot:
                 continue
 
             print(f"possible execution plan: {execution_plan.final_token_amount / execution_plan.initial_token_amount} profit percentage {execution_plan} ")
+            gas_fee, gas_price = self.transaction_executor.gas_estimation(execution_plan)
+
+            print(f"estimated gas: {gas_fee} {gas_price} {gas_fee * gas_price / (10 ** 18)}")
+
+            simulation_result: SimulationResult = (
+                self.transaction_executor.simulate_transaction(execution_plan)
+            )
+
             if (
                 execution_plan.final_token_amount - execution_plan.initial_token_amount
                 <= 0
             ):
                 continue
-
-            simulation_result: SimulationResult = (
-                self.transaction_executor.simulate_transaction(execution_plan)
-            )
 
             print(f"simulation result: {simulation_result}")
 
