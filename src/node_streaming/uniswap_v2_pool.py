@@ -9,6 +9,11 @@ class UniswapV2PoolFinder():
         self.w3 = w3
 
     def find_pools(self, token_address: str) -> list[ContractEventDefinition]:
+        """
+        Adhoc find all pools, filter pool that doesn't have much usd value
+        :param token_address:
+        :return:
+        """
         # UniswapV2 Factory Contract Address and ABI
         uniswap_factory_address = '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'
 
@@ -38,6 +43,7 @@ class UniswapV2PoolFinder():
 
             block = min(temp_block, end_block)
             pairs.extend(new_pairs)
+
 
     def find_pool_manual(self) -> list[ContractEventDefinition]:
         return [

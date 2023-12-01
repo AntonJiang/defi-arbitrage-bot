@@ -8,6 +8,7 @@ from src.db.trading_path_db import InMemoryTradingPathDB
 from src.flashloan.providers import FlashloanProvider, AaveFlashloanProvider
 from src.node_streaming import NodeStreaming, ContractEventDefinition, ContractEvent
 from src.node_streaming.uniswap_v2_pool import UniswapV2PoolFinder
+from src.node_streaming.uniswap_v3_pool import UniswapV3PoolFinder
 from src.node_streaming.web3_pool import Web3Pool
 from src.transaction_execution import (
     TransactionExecutor,
@@ -25,14 +26,13 @@ class Bot:
 
     def __init__(
         self,
-        watching_events: list[ContractEventDefinition],
         flashloan_providers: list[FlashloanProvider],
     ):
         self.w3_pool = Web3Pool()
         finder = UniswapV2PoolFinder(self.w3_pool)
-
+        finder_v3 = UniswapV3PoolFinder(self.w3_pool)
         self.node = NodeStreaming(
-            os.environ["NODE_URL"], watching_contracts=finder.find_pool_manual()
+            os.environ["NODE_URL"], watching_contracts=finder.find_pool_manual() + finder_v3.find_pool_manual()
         )
         self.flashloan_providers = flashloan_providers
 

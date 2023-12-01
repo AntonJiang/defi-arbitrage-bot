@@ -15,6 +15,7 @@ class Web3Pool:
             self.cache = {}
 
     def get_token0_token1(self, lp_contract):
+        lp_contract = self.web3.to_checksum_address(lp_contract)
         if lp_contract in self.cache:
             return self.cache[lp_contract]
         _token0 = self.read_contract(lp_contract, TOKEN0_TOKEN1, 'token0', parameters=[])
