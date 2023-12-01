@@ -28,8 +28,8 @@ class UniswapV3TradingPath(TradingPath):
     FEE_RATE: float = 0.003
 
     def calculate_price(self, token_in: int, token: str) -> PriceUpdate:
-        reserve0 = self.reserve_0
-        reserve1 = self.reserve_1
+        reserve0 = self.reserve_0 * 10
+        reserve1 = self.reserve_1 * 10
 
         k = reserve0 * reserve1
 
