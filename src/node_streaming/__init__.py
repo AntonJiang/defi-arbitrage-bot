@@ -61,7 +61,7 @@ class NodeStreaming:
         for contract_def in watching_contracts:
             event_name = contract_def.event
             contract = self.w3.eth.contract(
-                address=contract_def.address, abi=get_event_abi(event_name)
+                address=self.w3.to_checksum_address(contract_def.address), abi=get_event_abi(event_name)
             )
             event_filter = getattr(contract.events, event_name).create_filter(
                 fromBlock=start_block_number

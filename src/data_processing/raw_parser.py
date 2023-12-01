@@ -1,4 +1,4 @@
-from src.data_processing.trading_path import TradingPath
+from src.data_processing.trading_path import TradingPath, UniswapV3TradingPath
 from src.data_processing.trading_path import UniswapV2TradingPath
 from src.data_processing.typings import PriceUpdate
 
@@ -30,6 +30,18 @@ class DataParser:
                 token_1=token1,
                 reserve_0=raw_event.args.reserve0,
                 reserve_1=raw_event.args.reserve1,
+            )
+        elif definition.event == 'Swap':
+            token0, token1 = self.w3.get_token0_token1(definition.address)
+
+            trading_path = UniswapV3TradingPath(
+                protocol_name="uniswapv3",
+                contract_address=definition.address,
+                token_0=token0,
+                token_1=token1,
+                sqrtPriceX96=raw_event.args.sqrtPriceX96,
+                reserve_0=abs(raw_event.args.amount0),
+                reserve_1=abs(raw_event.args.amount1),
             )
         else:
             raise NotImplementedError
